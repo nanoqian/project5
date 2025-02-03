@@ -1,19 +1,37 @@
-# Project 05
+import numpy as np
+import matplotlib.pyplot as plt
+from functools import reduce, partial
 
-# Electric field visualization
+class Charge:
+    def __init__(self, x: float, y: float, charge: float) -> None:
+        self.x = x
+        self.y = y
+        self.charge = charge
 
-import sympy as sp
-import math
+def field_from_charge(X, Y, charge: Charge, epsilon=1e-12, min_distance=0.5):
+    U = X - charge.x
+    V = Y - charge.y
+    magnitudes = np.sqrt(U**2 + V**2)
+    magnitudes = np.where(magnitudes < min_distance, min_distance, magnitudes)
+    U /= magnitudes
+    V /= magnitudes
+    energy = charge.charge / (magnitudes**2)
+    U *= energy
+    V *= energy
+    return U, V
 
-# Symbols
+def add_tuple(A, B):
+    Ax, Ay = A
+    Bx, By = B
+    return Ax + Bx, Ay + By
 
-t = sp.symbols('t')
+def field_from_charges(X, Y, charges: list[Charge]):
+    return reduce(add_tuple, map(partial(field_from_charge, X, Y), charges))
 
-# Operation
+X, Y = np.meshgrid(np.linspace(-10, 10, 200), np.linspace(-10, 10, 200))
 
-f = sp.sin(t)
-g = sp.tan(t)
+charges = [Charge(-5, 0, 1), Charge(5, 0, -1)]
+U, V = field_from_charges(X, Y, charges)
 
-
-# Plot this
-p = sp.plot_parametric(f,g, (t,0, 2*sp.pi))
+plt.quiver(X, Y, U, V, scale=30)
+plt.show()
